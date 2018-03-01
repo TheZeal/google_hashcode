@@ -6,7 +6,7 @@
 
 int algo = 0;
 
-#define SCORE
+#define noSCORE
 
 using namespace std;
 
@@ -145,15 +145,16 @@ struct soluce
     {
 #ifdef SCORE       
         std::cout << score_ << std::endl;
-#endif
-        // for (auto &vc:car_rides)
-        // {
-        //     std::cout << vc.size() << " ";
-        //     for (auto r:vc)
-        //         std::cout << r << " ";
-        //     std::cout << std::endl;
-        // }
+#else
+        for (auto &vc:car_rides)
+        {
+            std::cout << vc.size() << " ";
+            for (auto r:vc)
+                std::cout << r << " ";
+            std::cout << std::endl;
+        }
     }
+#endif
 };
 
 void solve( pb &p )
@@ -233,10 +234,13 @@ int main( int argc, char **argv )
 
     pbfile.close();
 
+#ifdef SCORE  
     int score = 0;
+
     for (auto &r:p.rides)
         score += p.bonus + distance_xy( r.from, r.to );
     std::cout << "MAX SCORE=" << score << std::endl;
+#endif
 
     solve( p );
 
