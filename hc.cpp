@@ -6,7 +6,7 @@
 
 int algo = 0;
 
-#define noSCORE
+#define SCORE
 
 using namespace std;
 
@@ -41,6 +41,8 @@ struct ride
     xyt from;
     xyt to;
     explicit ride( int n ) : n_{n} {}
+
+    int score() const { return distance_xy( from, to ); }
 };
 
 struct car
@@ -81,22 +83,19 @@ struct pb
     std::vector<ride> rides;
     std::vector<car> cars;
 
-    int get_nearest_ride( const xyt &p, int &delta )
+    int get_best_ride( const xyt &p, int &delta )
     {
         int best = -1;
         int best_d = 1000000;
 
-        if (algo==0)
+        for (int i=0;i!=rides.size();i++)
         {
-            for (int i=0;i!=rides.size();i++)
+            auto r = rides[i];
+            auto d = wait_time( p, r.from );
+            if (d>=0 && d<best_d)
             {
-                auto r = rides[i];
-                auto d = wait_time( p, r.from );
-                if (d>=0 && d<best_d)
-                {
-                    best = i;
-                    best_d = d;
-                }
+                best = i;
+                best_d = d;
             }
         }
 
@@ -125,12 +124,41 @@ struct pb
 
         return -1;
     }
+
+    static bool can_go( const xyt &p, const ride &r )
+    {
+        return p.t + distance_xy( p, r.from ) < r.to.t-r.score();
+    }
+
+    int get_nearest_ride( const xyt &p )
+    {
+        int best = -1;
+        int best_d = 1000000;
+
+        for (int i=0;i!=rides.size();i++)
+        {
+            auto r = rides[i];
+            double max_v = 0;
+            if (can_go(p,r))
+            {
+                auto score = r.score();
+                auto dist = distance_xy(p,r.from);
+                auto t_start = p.t + dist;
+                if (t_start<r.from.t)
+                    dist += r.from.t-t_start;
+                dist += score;
+                double v = score/(double)dist;
+                if (v>max_v)
+                {
+                    v = max_v;
+                    best = i;
+                }
+            }
+        }
+        return best;
+    }
 };
 
-/*
-    MAX SCORE=14272704
-               8345542
-*/
 
 struct soluce
 {
@@ -153,8 +181,8 @@ struct soluce
                 std::cout << r << " ";
             std::cout << std::endl;
         }
-    }
 #endif
+    }
 };
 
 void solve( pb &p )
@@ -170,8 +198,10 @@ void solve( pb &p )
     {
         auto c = q.top();
         q.pop();
-        int delta;
-        int ride_index = p.get_nearest_ride( c.pos_, delta );
+        int delta = -1;
+        // int ride_index = (algo==0)?p.get_best_ride( c.pos_, delta ):p.get_nearest_ride( c.pos_ );
+        int ride_index = p.get_nearest_ride( c.pos_ );
+
         if (ride_index!=-1)
         {
             auto ride = p.rides[ride_index];
