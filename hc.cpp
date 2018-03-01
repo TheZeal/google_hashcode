@@ -4,6 +4,10 @@
 #include <vector>
 #include <queue>
 
+int algo = 0;
+
+#define SCORE
+
 using namespace std;
 
 struct xy
@@ -81,14 +85,18 @@ struct pb
     {
         int best = -1;
         int best_d = 1000000;
-        for (int i=0;i!=rides.size();i++)
+
+        if (algo==0)
         {
-            auto r = rides[i];
-            auto d = wait_time( p, r.from );
-            if (d>=0 && d<best_d)
+            for (int i=0;i!=rides.size();i++)
             {
-                best = i;
-                best_d = d;
+                auto r = rides[i];
+                auto d = wait_time( p, r.from );
+                if (d>=0 && d<best_d)
+                {
+                    best = i;
+                    best_d = d;
+                }
             }
         }
 
@@ -119,6 +127,11 @@ struct pb
     }
 };
 
+/*
+    MAX SCORE=14272704
+               8345542
+*/
+
 struct soluce
 {
     std::vector<std::vector<int>> car_rides;
@@ -130,13 +143,16 @@ struct soluce
 
     void print() const
     {
-        for (auto &vc:car_rides)
-        {
-            std::cout << vc.size() << " ";
-            for (auto r:vc)
-                std::cout << r << " ";
-            std::cout << std::endl;
-        }
+#ifdef SCORE       
+        std::cout << score_ << std::endl;
+#endif
+        // for (auto &vc:car_rides)
+        // {
+        //     std::cout << vc.size() << " ";
+        //     for (auto r:vc)
+        //         std::cout << r << " ";
+        //     std::cout << std::endl;
+        // }
     }
 };
 
@@ -188,10 +204,12 @@ void read( istream &i, ride &r )
 
 int main( int argc, char **argv )
 {
-    assert( argc==2 );
+    assert( argc==3 );
+
+    algo = argv[1][0]-'0';
 
     ifstream pbfile;
-    pbfile.open( argv[1] );
+    pbfile.open( argv[2] );
 
     pb p;
     pbfile >> p.height;
@@ -214,6 +232,11 @@ int main( int argc, char **argv )
     }
 
     pbfile.close();
+
+    int score = 0;
+    for (auto &r:p.rides)
+        score += p.bonus + distance_xy( r.from, r.to );
+    std::cout << "MAX SCORE=" << score << std::endl;
 
     solve( p );
 
