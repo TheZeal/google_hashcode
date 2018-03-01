@@ -6,7 +6,7 @@
 
 int algo = 0;
 
-#define SCORE
+#define noSCORE
 
 using namespace std;
 
