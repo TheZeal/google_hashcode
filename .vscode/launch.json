@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/hc",
-            "args": [ "data/b.in" ],
+            "args": [ "data/e.in" ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
