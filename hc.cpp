@@ -135,10 +135,10 @@ struct pb
         int best = -1;
         int best_d = 1000000;
 
+        double max_v = 0;
         for (int i=0;i!=rides.size();i++)
         {
             auto r = rides[i];
-            double max_v = 0;
             if (can_go(p,r))
             {
                 auto score = r.score();
@@ -150,7 +150,7 @@ struct pb
                 double v = score/(double)dist;
                 if (v>max_v)
                 {
-                    v = max_v;
+                    max_v = v;
                     best = i;
                 }
             }
@@ -215,7 +215,14 @@ void solve( pb &p )
             // std::cout << "[" << ride_index << "] wait=" << wait_time( c.pos_, ride.from ) << " score=" << score << std::endl;
             p.rides.erase( std::begin(p.rides)+ride_index );
             c.pos_ = ride.to;
-            c.pos_.t = ride.from.t + distance_xy( ride.from, ride.to ) + delta;
+            if(c.pos_.t + distance_xy(c.pos_, ride.from) > ride.from.t)
+            {
+                c.pos_.t = distance_xy(c.pos_, ride.from) + c.pos_.t + ride.score();
+            }
+            else
+            {
+                c.pos_.t = ride.from.t + ride.score();
+            }
             q.emplace( c );
         }
     }
