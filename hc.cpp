@@ -1,21 +1,13 @@
+//  Cleaned-up google hash code entry
+
 #include <iostream>
 #include <fstream>
 #include <assert.h>
 #include <vector>
 #include <queue>
+#include <cmath>
 
-int algo = 0;
-
-#define noSCORE
-
-using namespace std;
-
-struct xy
-{
-    int x;
-    int y;
-};
-
+/// A point in time
 struct xyt
 {
     int x;
@@ -23,41 +15,49 @@ struct xyt
     int t;
 };
 
-inline int my_abs( int n ) { return (n<0)?-n:n; }
-
+/// Physical distance between two point-in-time (time is ignored)
 int distance_xy( const xyt& from, const xyt & to )
 {
-    return my_abs( from.x-to.x ) + my_abs( from.y-to.y );
+    return std::abs( from.x-to.x ) + std::abs( from.y-to.y );
 }
 
+/// How long you will wait at destination if you start from original point
 int wait_time( const xyt& from, const xyt & to )
 {
     return (to.t-from.t) - distance_xy( from, to );
 }
 
+/// #### Add a last-pick method
+/// A ride
 struct ride
 {
-    int n_;
-    xyt from;
-    xyt to;
+    int n_;     /// Ride number
+
+    xyt from;   /// Pick place and time should pick the person
+    xyt to;     /// Drop place and time
+
     explicit ride( int n ) : n_{n} {}
 
     int score() const { return distance_xy( from, to ); }
 };
 
+/// A car
 struct car
 {
-    int n_;
-    xyt pos_;
+    int n_;     /// Car number
+
+    xyt pos_;   /// Current car position
+
     explicit car( int n ) : n_{n}, pos_{ 0,0,0 } {}
 };
 
 class compare_cars
 {
 public:
-    bool operator() (const car &, const car &)
+    bool operator() (const car &a, const car &b)
     {
-        return true;
+        return a.pos_.t>b.pos_.t;
+        // return true;
     }
 };
 
@@ -124,39 +124,6 @@ struct pb
 
         return -1;
     }
-
-    static bool can_go( const xyt &p, const ride &r )
-    {
-        return p.t + distance_xy( p, r.from ) < r.to.t-r.score();
-    }
-
-    int get_nearest_ride( const xyt &p )
-    {
-        int best = -1;
-        int best_d = 1000000;
-
-        double max_v = 0;
-        for (int i=0;i!=rides.size();i++)
-        {
-            auto r = rides[i];
-            if (can_go(p,r))
-            {
-                auto score = r.score();
-                auto dist = distance_xy(p,r.from);
-                auto t_start = p.t + dist;
-                if (t_start<r.from.t)
-                    dist += r.from.t-t_start;
-                dist += score;
-                double v = score/(double)dist;
-                if (v>max_v)
-                {
-                    max_v = v;
-                    best = i;
-                }
-            }
-        }
-        return best;
-    }
 };
 
 
@@ -171,9 +138,7 @@ struct soluce
 
     void print() const
     {
-#ifdef SCORE       
-        std::cout << score_ << std::endl;
-#else
+        std::cerr << "  SOL SCORE : " << score_ << std::endl;
         for (auto &vc:car_rides)
         {
             std::cout << vc.size() << " ";
@@ -181,7 +146,6 @@ struct soluce
                 std::cout << r << " ";
             std::cout << std::endl;
         }
-#endif
     }
 };
 
@@ -199,8 +163,7 @@ void solve( pb &p )
         auto c = q.top();
         q.pop();
         int delta = -1;
-        // int ride_index = (algo==0)?p.get_best_ride( c.pos_, delta ):p.get_nearest_ride( c.pos_ );
-        int ride_index = p.get_nearest_ride( c.pos_ );
+        int ride_index = p.get_best_ride( c.pos_, delta );
 
         if (ride_index!=-1)
         {
@@ -214,15 +177,17 @@ void solve( pb &p )
 
             // std::cout << "[" << ride_index << "] wait=" << wait_time( c.pos_, ride.from ) << " score=" << score << std::endl;
             p.rides.erase( std::begin(p.rides)+ride_index );
-            c.pos_ = ride.to;
-            if(c.pos_.t + distance_xy(c.pos_, ride.from) > ride.from.t)
+            auto pre_ride_travel_distance = distance_xy(c.pos_, ride.from);
+            if(c.pos_.t + pre_ride_travel_distance > ride.from.t)
             {
-                c.pos_.t = distance_xy(c.pos_, ride.from) + c.pos_.t + ride.score();
+                c.pos_.t += pre_ride_travel_distance + ride.score();
             }
             else
             {
                 c.pos_.t = ride.from.t + ride.score();
             }
+            c.pos_.x = ride.to.x;
+            c.pos_.y = ride.to.y;
             q.emplace( c );
         }
     }
@@ -230,7 +195,7 @@ void solve( pb &p )
     sol.print();
 }
 
-void read( istream &i, ride &r )
+void read( std::istream &i, ride &r )
 {
     i >> r.from.y;
     i >> r.from.x;
@@ -242,12 +207,12 @@ void read( istream &i, ride &r )
 
 int main( int argc, char **argv )
 {
-    assert( argc==3 );
+    assert( argc==2 );
 
-    algo = argv[1][0]-'0';
+    std::ifstream pbfile;
+    pbfile.open( argv[1] );
 
-    ifstream pbfile;
-    pbfile.open( argv[2] );
+    std::cerr << "HC  DATA FILE " << argv[1] << std::endl;
 
     pb p;
     pbfile >> p.height;
@@ -271,13 +236,11 @@ int main( int argc, char **argv )
 
     pbfile.close();
 
-#ifdef SCORE  
     int score = 0;
 
     for (auto &r:p.rides)
         score += p.bonus + distance_xy( r.from, r.to );
-    std::cout << "MAX SCORE=" << score << std::endl;
-#endif
+    std::cerr << "  MAX SCORE : " << score << std::endl;
 
     solve( p );
 
